@@ -2,12 +2,12 @@
 
 
 
-/*How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)*/
+/*How many pizzarunner.runners signed up for each 1 week period? (i.e. week starts 2021-01-01)*/
 
 select 
   EXTRACT('week'  from registration_date) week_number, count(runner_id) total_runners 
 from 
-  runners
+  pizzarunner.runners
 group by 
   week_number
 order by 1;
@@ -19,8 +19,8 @@ order by 1;
 select 
   runner_id, extract(min from avg((cast(ro.pickup_time as timestamp)) -co.order_time))
 from
-  customer_orders co
-  join runner_orders ro
+  pizzarunner.customer_orders co
+  join pizzarunner.runner_orders ro
 on
   co.order_id = ro.order_id
 where coalesce(cancellation,'')=''
@@ -33,8 +33,8 @@ select
   co.order_id,count(pizza_id), extract(min from avg((cast(ro.pickup_time as timestamp)) -co.order_time)) mins_to_prepare_order, 
   round(extract(min from avg((cast(ro.pickup_time as timestamp)) -co.order_time))/count(pizza_id)) avg_time
 from
-  customer_orders co
-  join runner_orders ro
+  pizzarunner.customer_orders co
+  join pizzarunner.runner_orders ro
 on
   co.order_id = ro.order_id
 where coalesce(cancellation,'')=''
@@ -46,9 +46,9 @@ group by 1;
 select
   customer_id, avg(cast(replace(replace(replace(distance,'km',''),'null','0'),'','0') as float))
 from
- customer_orders co
+ pizzarunner.customer_orders co
 join 
- runner_orders ro
+ pizzarunner.runner_orders ro
  on co.order_id=ro.order_id
 group by customer_id
 ;
@@ -59,9 +59,9 @@ SELECT
   extract(min from (max(cast(pickup_time as timestamp)-order_time))) longest_time,
   extract(min from (min(cast(pickup_time as timestamp)-order_time))) shortest_time 
 FROM
-  customer_orders co 
+  pizzarunner.customer_orders co 
 JOIN
-  runner_orders ro 
+  pizzarunner.runner_orders ro 
 ON 
   co.order_id = ro.order_id 
 where coalesce(cancellation,'')='';
@@ -78,7 +78,7 @@ with r as
     cast(replace(replace(replace(distance,'km',''),'null','0'),'','0') as float) distance,
     cast(replace(replace(replace(replace(duration,'minutes',''),'mins',''),'null','0'),'minute','') as float) duration
   FROM
-    runner_orders
+    pizzarunner.runner_orders
   where coalesce(cancellation,'')=''
 )
 SELECT runner_id, 100*(sum(distance)*1.0/sum(duration))
@@ -93,5 +93,5 @@ group by 1
 select runner_id,round(100* (sum(success)*1.0/ count(order_id)),2) percentage
 from
   (select runner_id, order_id, ( case when coalesce(replace(cancellation,'null',''),'') = ''  then 1 else 0 end) success
-  from runner_orders)a
+  from pizzarunner.runner_orders)a
 group by 1;
