@@ -5,9 +5,9 @@ How many pizzas were ordered?
 SELECT
   COUNT(pizza_id)
 FROM
-  customer_orders;
+  pizzarunner.customer_orders;
   
--- RESULT - 14
+
   
   /*
   How many unique customer orders were made?
@@ -16,26 +16,27 @@ FROM
 SELECT
   COUNT(DISTINCT ORDER_ID)
 FROM
-  customer_orders;
-/* RESULT - 10 - - How many successful orders were delivered by each runner ? */
+  pizzarunner.customer_orders;
+  
 
+/* RESULT - 10 - - How many successful orders were delivered by each runner ? */
 
 SELECT
   runner_id,
   count(order_id)
 FROM
-  runner_orders
+  pizzarunner.runner_orders
 WHERE
   coalesce(cancellation, '') = ''
 GROUP BY
   runner_id;
-- - How many of each type of pizza was delivered ?
+/* How many of each type of pizza was delivered ?*/
 SELECT
   pizza_id,
   count(*)
 FROM
-  customer_orders co
-  JOIN runner_orders ro ON co.order_id = ro.order_id
+  pizzarunner.customer_orders co
+  JOIN pizzarunner.runner_orders ro ON co.order_id = ro.order_id
 WHERE
   COALESCE(ro.cancellation, '') != ''
 GROUP BY
@@ -62,9 +63,9 @@ SELECT
     end
   ) Vegetarian
 FROM
-  customer_orders co
-  JOIN runner_orders ro ON co.order_id = ro.order_id
-  JOIN pizza_names pn ON co.pizza_id = pn.pizza_id
+  pizzarunner.customer_orders co
+  JOIN pizzarunner.runner_orders ro ON co.order_id = ro.order_id
+  JOIN pizzarunner.pizza_names pn ON co.pizza_id = pn.pizza_id
 WHERE
   COALESCE(ro.cancellation, '') != ''
 group by
@@ -91,8 +92,8 @@ FROM
           co.order_id,
           COUNT(pizza_id) cnt
         FROM
-          customer_orders co
-          JOIN runner_orders ro ON co.order_id = ro.order_id
+          pizzarunner.customer_orders co
+          JOIN pizzarunner.runner_orders ro ON co.order_id = ro.order_id
         WHERE
           COALESCE(ro.cancellation, '') != ''
         GROUP BY
@@ -127,8 +128,8 @@ SELECT
   ) as Nochange,
   count(*) total
 FROM
-  customer_orders co
-  JOIN runner_orders ro ON co.order_id = ro.order_id
+  pizzarunner.customer_orders co
+  JOIN pizzarunner.runner_orders ro ON co.order_id = ro.order_id
 WHERE 
   COALESCE(ro.cancellation, '') != ''
 GROUP BY
@@ -142,8 +143,8 @@ order by
 SELECT 
   count(pizza_id) total_delivered
 FROM
-  customer_orders co
-  JOIN runner_orders ro ON co.order_id = ro.order_id
+  pizzarunner.customer_orders co
+  JOIN pizzarunner.runner_orders ro ON co.order_id = ro.order_id
 WHERE 
   COALESCE(ro.cancellation, '') != '' and  coalesce(exclusions, '') != ''
         and coalesce(extras, '') != '';
@@ -153,5 +154,5 @@ WHERE
 
 SELECT ro.order_id,pickup_time
 FROM
-  customer_orders co
-  JOIN runner_orders ro ON co.order_id = ro.order_id
+  pizzarunner.customer_orders co
+  JOIN pizzarunner.runner_orders ro ON co.order_id = ro.order_id;
