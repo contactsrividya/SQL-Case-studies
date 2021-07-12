@@ -33,13 +33,22 @@ B. Data Analysis Questions
 
 #How many customers has Foodie-Fi ever had (with plan='trial')?
 select
-  count(distinct customer_id)  Unique_trial_customers 
+  count(distinct customer_id)  Total_trial_customers 
 from
   subscriptions s join plans p 
 on
   s.plan_id = p.plan_id
 where
   p.plan_name='trial';
+
+/* 
+RESULT :
++-----------------------+
+| Total_trial_customers |
++-----------------------+
+|                  1000 |
++-----------------------+
+*/
 
 
 #What is the monthly distribution of trial plan 
@@ -55,6 +64,26 @@ where
 group by 1,2
 order by 1,2;
 
+/* 
+RESULT : 
++------------------+------+------------------+
+| year(start_date) | mth  | count(s.plan_id) |
++------------------+------+------------------+
+|             2020 |    1 |               88 |
+|             2020 |    2 |               68 |
+|             2020 |    3 |               94 |
+|             2020 |    4 |               81 |
+|             2020 |    5 |               88 |
+|             2020 |    6 |               79 |
+|             2020 |    7 |               89 |
+|             2020 |    8 |               88 |
+|             2020 |    9 |               87 |
+|             2020 |   10 |               79 |
+|             2020 |   11 |               75 |
+|             2020 |   12 |               84 |
++------------------+------+------------------+
+12 rows in set (0.01 sec)
+*/
 
 #What plan start_date values occur after the year 2020 for our dataset? Show the breakdown by count of events for each plan_name
 
@@ -68,7 +97,19 @@ where
   year(start_date)=2021
 group by plan_name ;
 
+/*
 
+select 
+  plan_name,count(s.plan_id) Total_events_after_2020
+from
+  subscriptions s join plans p 
+on
+  s.plan_id=p.plan_id 
+where
+  year(start_date)=2021
+group by plan_name ;
+
+*/
 #What is the customer count and percentage of customers who have churned rounded to 1 decimal place?
 with 
   tot_customers as 
@@ -91,6 +132,16 @@ select
 from
   tot_customers,churned;
 
+/*
+
++---------------+-----------------+---------------------------------+
+| tot_customers | churn_customers | percentage_of_churned_customers |
++---------------+-----------------+---------------------------------+
+|          2650 |             307 |                            11.6 |
++---------------+-----------------+---------------------------------+
+1 row in set (0.00 sec)
+
+*/
 
 #How many customers have churned straight after their initial free trial - what percentage is this rounded to the nearest whole number?
 
@@ -228,6 +279,14 @@ select
   'Grand Total', sum(totplans), round(sum(((totplans*1.0/grandtot)*100)),2) 
   from plan;
 
+/*
+RESULT: 
++---------------+-----------------+------------+
+| tot_customers | churn_customers | percentage |
++---------------+-----------------+------------+
+|          1000 |              92 |          9 |
++---------------+-----------------+------------+
+*/
 #7. What is the customer count and percentage breakdown of all 5 plan_name values at 2020-12-31?
  #LOGIC: 
  #Result set 1: customer wise get hte maximum start date where start date is <='2020-12-31' 
@@ -280,17 +339,53 @@ res as
 )
  select * from res;
  
+ /*
+RESULT:  
++---------------+------------+-----------------+
+| plan_name     | cust_count | percentage_cust |
++---------------+------------+-----------------+
+| trial         |         19 |            1.90 |
+| basic monthly |        224 |           22.40 |
+| pro monthly   |        326 |           32.60 |
+| pro annual    |        195 |           19.50 |
+| churn         |        236 |           23.60 |
+| Grand total   |       1000 |          100.00 |
++---------------+------------+-----------------+
+
+ */
  
  #8. How many customers have upgraded to an annual plan in 2020?
  #LOGIC: select list of customers from subscription where plan name = pro annual and start_date is 2020
- 
- select 
-   count(distinct customer_id) Annual_customers_in_2020
-from 
-  subscriptions s join plans p on s.plan_id = p.plan_id 
-where 
-  plan_name = 'pro annual' and year(start_date) = 2020;
-   
+  with method1 as   #only customer count 
+ (
+  select 
+    count(distinct customer_id) Annual_customers_in_2020
+  from 
+    subscriptions s join plans p on s.plan_id = p.plan_id 
+  where 
+    plan_name = 'pro annual' and year(start_date) = 2020
+ ),
+ method2 as #customer count with percentage
+ (
+    select 
+      sum(case when plan_name = 'pro annual' then 1 else 0 end) Annual_customers , count(distinct customer_id) totalcustomers, 
+      round(100*((1.0*sum(case when plan_name = 'pro annual' then 1 else 0 end))/count(distinct customer_id)),2) perc
+  from 
+    subscriptions s join plans p on s.plan_id = p.plan_id 
+  where  year(start_date) = 2020
+ )
+ select * from method2;
+
+/*
+
++------------------+----------------+-------+
+| Annual_customers | totalcustomers | perc  |
++------------------+----------------+-------+
+|              195 |           1000 | 19.50 |
++------------------+----------------+-------+
+
+*/
+
 #9. How many days on average does it take for a customer to an annual plan from the day they join Foodie-Fi?
 #Result set 1: get the inital start date for customers who enrolled in annual plan 
 #Result set 2: get the start date for customers with annual plan and days difference between result 1 and annual plan start date 
@@ -323,6 +418,16 @@ avg_per_customer as
 )
 select * from avg_per_customer;
 
+/*
+RESULT 
+
++------------------+------------+---------------------------+
+| annual_customers | total_days | Average_days_per_customer |
++------------------+------------+---------------------------+
+|              258 |      26992 |                       105 |
++------------------+------------+---------------------------+
+
+*/
 #9B. Can you further breakdown this average value into 30 day periods (i.e. 0-30 days, 31-60 days etc)
 
 
@@ -366,6 +471,26 @@ from
 )
 select * from res;
 
+/*
+RESULT 
+
++-------------------+----------+----------+----------+
+| Days_Range        | tot_cust | tot_days | avg_days |
++-------------------+----------+----------+----------+
+| Less than 30 days |       48 |      458 |       10 |
+| 0 - 30            |       25 |     1046 |       42 |
+| 30 - 60           |       33 |     2339 |       71 |
+| 60 - 90           |       35 |     3494 |      100 |
+| 90 - 120          |       43 |     5721 |      133 |
+| 120 - 150         |       35 |     5654 |      162 |
+| 150 - 180         |       27 |     5139 |      190 |
+| 180 - 210         |        4 |      897 |      224 |
+| 210 - 240         |        5 |     1286 |      257 |
+| 240 - 270         |        1 |      285 |      285 |
+| 270 - 300         |        1 |      327 |      327 |
+| 300 - 330         |        1 |      346 |      346 |
++-------------------+----------+----------+----------+
+*/
 
 #11. How many customers downgraded from a pro monthly to a basic monthly plan in 2020?
 #LOGIC:
