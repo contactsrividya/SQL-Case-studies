@@ -83,7 +83,7 @@ plan_old_rate as
 (
   select 
       custid,p.plan_id,plan_name,st_date payment_date,
-    case when mth_tot >1  and p.plan_id in (2,3)  and prev_plan=1 then 
+    case when mth_tot >1  and p.plan_id in (2,3)  and prev_plan=1 then # if current plan is pro and previous plan is basic monthly 
         price-prev_price 
     else
       p.price 
