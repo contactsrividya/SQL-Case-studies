@@ -31,7 +31,7 @@ B. Data Analysis Questions
 10. How many customers downgraded from a pro monthly to a basic monthly plan in 2020?
 */
 
-#How many customers has Foodie-Fi ever had (with plan='trial')?
+#1. How many customers has Foodie-Fi ever had (with plan='trial')?
 select
   count(distinct customer_id)  Total_trial_customers 
 from
@@ -51,7 +51,7 @@ RESULT :
 */
 
 
-#What is the monthly distribution of trial plan 
+#2. What is the monthly distribution of trial plan 
 
 select 
 year(start_date),month(start_date) mth,count(s.plan_id)
@@ -85,7 +85,7 @@ RESULT :
 12 rows in set (0.01 sec)
 */
 
-#What plan start_date values occur after the year 2020 for our dataset? Show the breakdown by count of events for each plan_name
+#3. What plan start_date values occur after the year 2020 for our dataset? Show the breakdown by count of events for each plan_name
 
 select 
   plan_name,count(s.plan_id) Total_events_after_2020
@@ -110,40 +110,31 @@ where
 group by plan_name ;
 
 */
-#What is the customer count and percentage of customers who have churned rounded to 1 decimal place?
-with 
-  tot_customers as 
-(
-  select count(customer_id) tot_customers from subscriptions 
-),
-churned as 
-(
-  select 
-    count(distinct customer_id)  churn_customers
-  from 
-    subscriptions s join plans p
-  on 
-    s.plan_id = p.plan_id
-  where plan_name='churn'
-)
+#4. What is the customer count and percentage of customers who have churned rounded to 1 decimal place?
+  
 select 
-    tot_customers,churn_customers,
-    round((100*(churn_customers*1.0/tot_customers)),1) percentage_of_churned_customers
+   count(distinct customer_id) total_customers, 
+   sum(case when plan_name = 'churn' then 1 else 0 end) churn_customers, 
+   round(100*((sum(case when plan_name = 'Churn' then 1 else 0 end)*1.0)/count(distinct customer_id)),2)
+    percentage_of_churned_customers
 from
-  tot_customers,churned;
+      subscriptions s join plans p 
+on
+      s.plan_id = p.plan_id ;
+    
 
 /*
 
 +---------------+-----------------+---------------------------------+
 | tot_customers | churn_customers | percentage_of_churned_customers |
 +---------------+-----------------+---------------------------------+
-|          2650 |             307 |                            11.6 |
+|          2650 |             307 |                           30.70 |
 +---------------+-----------------+---------------------------------+
 1 row in set (0.00 sec)
 
 */
 
-#How many customers have churned straight after their initial free trial - what percentage is this rounded to the nearest whole number?
+#5. How many customers have churned straight after their initial free trial - what percentage is this rounded to the nearest whole number?
 
 #without window function 
 
@@ -502,7 +493,7 @@ with procustomers as
 (
   select customer_id,start_date pro_start_date
   from
-    subscriptions s join plans p on s.plan_id = p.plan_id 
+    subscriptions s join plans p on s.plan_id = p.plan_id   
   where 
     year(start_date)=2020 
     and plan_name = 'pro monthly'
